@@ -1,0 +1,65 @@
+#!/bin/bash
+
+function print_error {
+    echo "`basename $0`: $1"
+    exit 1
+}
+
+function print_usage {
+    echo "Usage: `basename $0` src"
+}
+
+function get_kernel_version {
+    local ver
+    local patch
+    local sub
+    local exver
+    ver=$(echo `grep -w ^VERSION Makefile | cut -d'=' -f2`)
+    patch=$(echo `grep -w ^PATCHLEVEL Makefile | cut -d'=' -f2`)
+    sub=$(echo `grep -w ^SUBLEVEL Makefile | cut -d'=' -f2`)
+    exver=$(echo `grep -w ^EXTRAVERSION Makefile | cut -d'=' -f2`)
+    echo ${ver}.${patch}.${sub}${exver}
+}
+    
+
+if (( $# != 1 )); then
+    print_usage;
+    exit 0
+fi
+
+SRCDIR=$1
+ARCH=$(uname -m)
+
+if [ ! -d $SRCDIR ]; then
+    print_error "$SRCDIR not found"
+fi
+
+if [ -z $MAKETHREADS ]; then 
+    nthreads=1
+else
+    nthreads=$MAKETHREADS
+fi
+nthreads=8
+
+set -e
+
+cd $SRCDIR
+# Get the kernel version from the Makefile
+KVER=$(get_kernel_version)
+echo "Building $KVER ..."
+
+make -j${nthreads} \
+    bzImage \
+    modules
+
+if [[ ! -f arch/${ARCH}/boot/bzImage ]]; then
+    print_error "bzImage not found"
+fi
+
+echo "Installing $KVER (root priveledges required)"
+su -c "\
+make -j${nthreads} modules_install && \
+cp -v arch/${ARCH}/boot/bzImage /boot/vmlinuz-$KVER && \
+cp -v System.map /boot/System.map-$KVER && \
+cp -v .config /boot/config-$KVER && \
+mkinitrd -c -k $KVER -o /boot/initrd-$KVER.gz -F"

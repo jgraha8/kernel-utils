@@ -1,0 +1,35 @@
+#!/bin/bash
+
+if (( $# != 3 )); then
+    echo "Usage: `basename $0` <base-version> <patch-start> <patch-end>"
+    exit 1
+fi
+
+#INCR_PATCH_DIR="https://www.kernel.org/pub/linux/kernel/v2.6/longterm/v2.6.32/incr"
+
+mkdir -p patches
+
+BASEVERSION="$1"
+BASESERIES=${BASEVERSION%.*}.x
+PATCH_START="$2"
+PATCH_END="$3"
+
+INCR_PATCH_DIR="https://www.kernel.org/pub/linux/kernel/v${BASESERIES}/incr"
+
+for (( i=PATCH_START; i<PATCH_END; i++ )); do
+    j=$((i+1))
+    if (( $i == 0 )); then
+	_patch="patch-${BASEVERSION}.${j}"
+	wget -P patches $INCR_PATCH_DIR/../${_patch}.gz
+    else
+	_patch="patch-${BASEVERSION}.${i}-${j}"
+	wget -P patches $INCR_PATCH_DIR/${_patch}.gz
+    fi
+    gunzip patches/${_patch}.gz &&
+    quilt import patches/${_patch} &&
+    quilt push 
+    if (( $? != 0 )); then
+	echo "error applying $_patch"
+	exit 1
+    fi
+done
