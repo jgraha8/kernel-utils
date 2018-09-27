@@ -20,12 +20,12 @@ for (( i=PATCH_START; i<PATCH_END; i++ )); do
     j=$((i+1))
     if (( $i == 0 )); then
 	_patch="patch-${BASEVERSION}.${j}"
-	wget -P patches $INCR_PATCH_DIR/../${_patch}.gz
+	wget -P patches $INCR_PATCH_DIR/../${_patch}.xz
     else
 	_patch="patch-${BASEVERSION}.${i}-${j}"
-	wget -P patches $INCR_PATCH_DIR/${_patch}.gz
+	wget -P patches $INCR_PATCH_DIR/${_patch}.xz
     fi
-    gunzip patches/${_patch}.gz &&
+    unxz -d patches/${_patch}.xz &&
     quilt import patches/${_patch} &&
     quilt push 
     if (( $? != 0 )); then
