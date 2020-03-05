@@ -38,7 +38,7 @@ KVER=$1
 TGZFILE=$2
 echo "Packaging emoving $KVER ..."
 
-tar zcvf $TGZFILE \
+tar --rsh-command=/usr/bin/ssh -zcv --file=$TGZFILE \
     $(readlink /lib/modules/$KVER/source) \
     /lib/modules/$KVER \
     /boot/vmlinuz-$KVER \
