@@ -25,9 +25,9 @@ for (( i=PATCH_START; i<PATCH_END; i++ )); do
 	_patch="patch-${BASEVERSION}.${i}-${j}"
 	wget -P patches $INCR_PATCH_DIR/${_patch}.xz
     fi
-    xz -d patches/${_patch}.xz &&
-	quilt import patches/${_patch} &&
-	quilt push
+    unxz -d patches/${_patch}.xz &&
+    quilt import patches/${_patch} &&
+    quilt push 
     if (( $? != 0 )); then
 	echo "error applying $_patch"
 	exit 1
